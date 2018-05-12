@@ -1,0 +1,1 @@
+capacitor-video-recorder
