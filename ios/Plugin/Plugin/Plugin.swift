@@ -5,8 +5,8 @@ import Capacitor
  * Please read the Capacitor iOS Plugin Development Guide
  * here: https://capacitor.ionicframework.com/docs/plugins/ios
  */
-@objc(CapacitorVideoRecorder)
-public class CapacitorVideoRecorder: CAPPlugin {
+@objc(CapacitorVideoRecorderPlugin)
+public class CapacitorVideoRecorderPlugin: CAPPlugin {
     
     @objc func echo(_ call: CAPPluginCall) {
         let value = call.getString("value") ?? ""

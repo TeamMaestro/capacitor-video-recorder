@@ -1,9 +1,9 @@
 declare global {
 	interface PluginRegistry {
-		CapacitorVideoRecorder?: CapacitorVideoRecorderPlugin;
+		CapacitorVideoRecorderPlugin?: ICapacitorVideoRecorder;
 	}
 }
 
-export interface CapacitorVideoRecorderPlugin {
+export interface ICapacitorVideoRecorder {
 	echo(options: { value: string }): Promise<{ value: string }>;
 }
