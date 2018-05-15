@@ -5,5 +5,12 @@ declare global {
 }
 
 export interface ICapacitorVideoRecorder {
-	echo(options: { value: string }): Promise<{ value: string }>;
+	initialize(): Promise<any>;
+	destroy(): Promise<any>;
+	show(): Promise<any>;
+	hide(): Promise<any>;
+	toggle(): Promise<any>;
+	startRecording(): Promise<any>;
+	stopRecording(): Promise<any>;
+	getStatus(): Promise<any[]>;
 }

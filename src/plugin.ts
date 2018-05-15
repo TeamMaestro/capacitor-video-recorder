@@ -7,7 +7,29 @@ export class CapacitorVideoRecorder implements ICapacitorVideoRecorder {
 
 	constructor() { }
 
-	echo(options: {value: string}): Promise<{ value: string }> {
-		return CapacitorVideoRecorderPlugin.echo(options);
+	initialize(): Promise<any> {
+		return CapacitorVideoRecorderPlugin.initialize();
 	}
+	destroy(): Promise<any> {
+		return CapacitorVideoRecorderPlugin.destroy();
+	}
+	show(): Promise<any> {
+		return CapacitorVideoRecorderPlugin.show();
+	}
+	hide(): Promise<any> {
+		return CapacitorVideoRecorderPlugin.hide();
+	}
+	toggle(): Promise<any> {
+		return CapacitorVideoRecorderPlugin.toggle();
+	}
+	startRecording(): Promise<any> {
+		return CapacitorVideoRecorderPlugin.startRecording();
+	}
+	stopRecording(): Promise<any> {
+		return CapacitorVideoRecorderPlugin.stopRecording();
+	}
+	getStatus(): Promise<any[]> {
+		return CapacitorVideoRecorderPlugin.getStatus();
+	}
+
 }
