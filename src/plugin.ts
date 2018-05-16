@@ -19,17 +19,14 @@ export class CapacitorVideoRecorder implements ICapacitorVideoRecorder {
 	hide(): Promise<any> {
 		return CapacitorVideoRecorderPlugin.hide();
 	}
-	toggle(): Promise<any> {
-		return CapacitorVideoRecorderPlugin.toggle();
+	togglePip(): Promise<{pictureInPicture: boolean}> {
+		return CapacitorVideoRecorderPlugin.togglePip();
 	}
 	startRecording(): Promise<any> {
 		return CapacitorVideoRecorderPlugin.startRecording();
 	}
-	stopRecording(): Promise<any> {
+	stopRecording(): Promise<{videoUrl: string}> {
 		return CapacitorVideoRecorderPlugin.stopRecording();
-	}
-	getStatus(): Promise<any[]> {
-		return CapacitorVideoRecorderPlugin.getStatus();
 	}
 
 }

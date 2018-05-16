@@ -9,8 +9,7 @@ export interface ICapacitorVideoRecorder {
 	destroy(): Promise<any>;
 	show(): Promise<any>;
 	hide(): Promise<any>;
-	toggle(): Promise<any>;
+	togglePip(): Promise<{pictureInPicture: boolean}>;
 	startRecording(): Promise<any>;
-	stopRecording(): Promise<any>;
-	getStatus(): Promise<any[]>;
+	stopRecording(): Promise<{videoUrl: string}>;
 }
