@@ -38,7 +38,7 @@ class CameraView: UIView {
     }
     
     func removePreviewLayer() {
-        self.videoPreviewLayer!.removeFromSuperlayer()
+        self.videoPreviewLayer?.removeFromSuperlayer()
         self.videoPreviewLayer = nil
     }
 }
@@ -78,7 +78,7 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
     // AVCaptureFileOutputRecordingDelegate
     public func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         stopRecordingCall?.success([
-            "videoUrl": outputFileURL.absoluteString
+            "videoUrl": CAPFileManager.getPortablePath(uri: outputFileURL) as Any
         ])
     }
     
@@ -134,7 +134,6 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
             call.error("Microphone access denied")
             return
         }
-        
         DispatchQueue.main.async {
             do {
                 if (self.captureSession?.isRunning != true) {
@@ -170,7 +169,6 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
                         self.captureSession!.addInput(audioInput)
                     }
                     
-                    self.captureSession?.usesApplicationAudioSession = true
                     
                     self.videoOutput = AVCaptureMovieFileOutput()
                     self.captureSession!.addOutput(self.videoOutput!)
@@ -195,75 +193,95 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
     @objc func destroy(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             self.makeOpaque()
-            self.captureSession!.stopRunning()
-            self.cameraView.removePreviewLayer()
-            self.captureVideoPreviewLayer = nil
-            self.videoOutput = nil
-            self.captureSession = nil
-            self.currentCamera = 0
-            self.frontCamera = nil
-            self.backCamera = nil
-            if (self.pictureInPicture) {
-                self.capWebView!.superview!.sendSubview(toBack: self.cameraView)
-                self.cameraView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-                self.cameraView.layer.cornerRadius = 0
-                self.cameraView.layer.borderWidth = 0
-                self.cameraView.clipsToBounds = true
-                self.pictureInPicture = false
+            if (self.captureSession != nil) {
+                self.captureSession!.stopRunning()
+                self.cameraView.removePreviewLayer()
+                self.captureVideoPreviewLayer = nil
+                self.videoOutput = nil
+                self.captureSession = nil
+                self.currentCamera = 0
+                self.frontCamera = nil
+                self.backCamera = nil
+                if (self.pictureInPicture) {
+                    self.makeTransparent()
+                    self.capWebView!.superview!.sendSubview(toBack: self.cameraView)
+                    self.cameraView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                    self.cameraView.layer.cornerRadius = 0
+                    self.cameraView.layer.borderWidth = 0
+                    self.cameraView.clipsToBounds = true
+                    self.pictureInPicture = false
+                }
             }
             call.success()
         }
     }
     
     @objc func show(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            self.makeTransparent()
-            call.success()
+        if (self.captureSession != nil) {
+            DispatchQueue.main.async {
+                self.makeTransparent()
+                call.success()
+            }
         }
     }
     
     @objc func hide(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            self.makeOpaque()
-            call.success()
+        if (self.captureSession != nil) {
+            DispatchQueue.main.async {
+                self.makeOpaque()
+                call.success()
+            }
         }
     }
     
     @objc func startRecording(_ call: CAPPluginCall) {
-        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let fileUrl = paths.appendingPathComponent("output.mp4")
-        try? FileManager.default.removeItem(at: fileUrl)
-        videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
+        if (self.captureSession != nil) {
+            if (!(videoOutput?.isRecording)!) {
+                let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let fileUrl = paths.appendingPathComponent("output.mp4")
+                try? FileManager.default.removeItem(at: fileUrl)
+                videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
+                call.success()
+            }
+        }
     }
     
     @objc func stopRecording(_ call: CAPPluginCall) {
-        self.stopRecordingCall = call
-        self.videoOutput!.stopRecording()
+        if (self.captureSession != nil) {
+            if (videoOutput?.isRecording)! {
+                self.stopRecordingCall = call
+                self.videoOutput!.stopRecording()
+            }
+        }
     }
     
     @objc func togglePip(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            if (self.pictureInPicture) {
-                self.makeTransparent()
-                self.capWebView!.superview!.sendSubview(toBack: self.cameraView)
-                self.cameraView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-                self.cameraView.layer.cornerRadius = 0
-                self.cameraView.layer.borderWidth = 0
-                self.cameraView.clipsToBounds = true
-                self.pictureInPicture = false
-            } else {
-                self.makeOpaque()
-                self.capWebView!.superview!.bringSubview(toFront: self.cameraView)
-                self.cameraView.frame = CGRect(x: 20, y: 50, width: 80, height: 120)
-                self.cameraView.layer.cornerRadius = 10
-                self.cameraView.clipsToBounds = true
-                self.cameraView.layer.borderWidth = 1
-                self.cameraView.layer.borderColor = UIColor.init(red:255/255, green:255/255, blue:255/255, alpha: 1).cgColor
-                self.pictureInPicture = true
+        if (self.captureSession != nil) {
+            DispatchQueue.main.async {
+                if (self.pictureInPicture) {
+                    self.makeTransparent()
+                    self.capWebView!.superview!.sendSubview(toBack: self.cameraView)
+                    self.cameraView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                    self.cameraView.layer.cornerRadius = 0
+                    self.cameraView.layer.borderWidth = 0
+                    self.cameraView.clipsToBounds = true
+                    self.pictureInPicture = false
+                } else {
+                    self.makeOpaque()
+                    self.capWebView!.superview!.bringSubview(toFront: self.cameraView)
+                    self.cameraView.frame = CGRect(x: 20, y: 50, width: 80, height: 120)
+                    self.cameraView.layer.cornerRadius = 10
+                    self.cameraView.clipsToBounds = true
+                    self.cameraView.layer.borderWidth = 1
+                    self.cameraView.layer.borderColor = UIColor.init(red:255/255, green:255/255, blue:255/255, alpha: 1).cgColor
+                    self.pictureInPicture = true
+                }
+                call.success([
+                    "pictureInPicture": self.pictureInPicture
+                ])
             }
-            call.success([
-                "pictureInPicture": self.pictureInPicture
-            ])
+        } else {
+            call.success()
         }
     }
 }
