@@ -62,12 +62,12 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
     var captureVideoPreviewLayer: AVCaptureVideoPreviewLayer?
     var videoOutput: AVCaptureMovieFileOutput?
     
-    var currentCamera: Int = 0;
+    var currentCamera: Int = 0
     var frontCamera: AVCaptureDevice?
     var backCamera: AVCaptureDevice?
     
     var pictureInPicture: Bool = false
-    
+    var quality: Int = 0
     // Capacitor plugin load
     override public func load() {
         self.capWebView = self.bridge.bridgeDelegate.bridgedWebView
@@ -77,9 +77,9 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
     
     // AVCaptureFileOutputRecordingDelegate
     public func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        stopRecordingCall?.success([
-            "videoUrl": CAPFileManager.getPortablePath(uri: outputFileURL) as Any
-        ])
+        self.stopRecordingCall?.success([
+            CAPFileManager.getPortablePath(uri: outputFileURL) as Any
+            ])
     }
     
     func createCaptureDeviceInput() throws -> AVCaptureDeviceInput {
@@ -173,6 +173,33 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
                     self.videoOutput = AVCaptureMovieFileOutput()
                     self.captureSession!.addOutput(self.videoOutput!)
                     
+                    self.captureSession?.beginConfiguration()
+                    switch(self.quality){
+                    case 1:
+                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd1280x720
+                        break;
+                    case 2:
+                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd1920x1080
+                        break;
+                    case 3:
+                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd4K3840x2160
+                        break;
+                    case 4:
+                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.high
+                        break;
+                    case 5:
+                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.low
+                        break;
+                    case 6:
+                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.cif352x288
+                        break;
+                    default:
+                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.vga640x480
+                        break;
+                        
+                    }
+                    self.captureSession?.commitConfiguration()
+                    
                     self.captureVideoPreviewLayer = AVCaptureVideoPreviewLayer(session: self.captureSession!)
                     self.cameraView.addPreviewLayer(self.captureVideoPreviewLayer)
                     self.captureSession!.startRunning()
@@ -238,7 +265,13 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
         if (self.captureSession != nil) {
             if (!(videoOutput?.isRecording)!) {
                 let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                let fileUrl = paths.appendingPathComponent("output.mp4")
+                var fileName = String(Date().timeIntervalSince1970 * 1000)
+                fileName.append(".mp4")
+                self.updatePosition(position: call.getInt("position") ?? 0)
+                self.quality = call.getInt("quality") ?? 0
+                self.destroy(call)
+                self.initialize(call)
+                let fileUrl = paths.appendingPathComponent(fileName)
                 try? FileManager.default.removeItem(at: fileUrl)
                 videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
                 call.success()
@@ -278,10 +311,56 @@ public class CapacitorVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordi
                 }
                 call.success([
                     "pictureInPicture": self.pictureInPicture
-                ])
+                    ])
             }
         } else {
             call.success()
         }
+    }
+    
+    @objc func toggleCamera(_ call: CAPPluginCall){
+        if(self.currentCamera == 0){
+            self.currentCamera = 1
+        }else{
+            self.currentCamera = 0
+        }
+        self.destroy(call)
+        self.initialize(call)
+        
+    }
+    @objc func getDuration(_ call: CAPPluginCall){
+        if(self.videoOutput!.isRecording){
+            let duration = self.videoOutput?.recordedDuration;
+            if(duration != nil){
+                call.success(["value":CMTimeGetSeconds(duration!)])
+            }else{
+                call.success(["value":0])
+            }
+            
+        }else{
+            call.success(["value":0])
+        }
+        
+    }
+    func updatePosition(position: Int){
+        switch(position){
+        case 1:
+            self.currentCamera = 1
+            break;
+        default:
+            self.currentCamera = 0
+            break;
+        }
+    }
+    
+    @objc func setPosition(_ call: CAPPluginCall){
+        self.currentCamera =  call.getInt("position") ?? 0
+        self.destroy(call)
+        self.initialize(call)
+    }
+    @objc func setQuality(_ call: CAPPluginCall){
+        self.quality = call.getInt("quality") ?? 0
+        self.destroy(call)
+        self.initialize(call)
     }
 }
