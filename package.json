@@ -13,7 +13,9 @@
 	"author": "Sean Bannigan",
 	"license": "MIT",
 	"dependencies": {
-		"@capacitor/core": "latest"
+		"@capacitor/android": "^1.0.0-alpha.38",
+		"@capacitor/cli": "^1.0.0-alpha.38",
+		"@capacitor/core": "^1.0.0-alpha.38"
 	},
 	"devDependencies": {
 		"typescript": "^2.6.2"
@@ -32,6 +34,9 @@
 	"capacitor": {
 		"ios": {
 			"src": "ios"
+		},
+		"android":{
+			"src":"android"
 		}
 	}
 }

@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VideoRecorderDemo</string>
+    <string name="title_activity_main">VideoRecorderDemo</string>
+    <string name="package_name">com.github.triniwiz.capacitor.VideoRecorderDemo</string>
+    <string name="fileprovider_authority">com.github.triniwiz.capacitor.VideoRecorderDemo.fileprovider</string>
+    <string name="custom_url_scheme">com.github.triniwiz.capacitor.VideoRecorderDemo</string>
+</resources>
