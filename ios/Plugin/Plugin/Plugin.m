@@ -9,6 +9,11 @@ CAP_PLUGIN(CapacitorVideoRecorderPlugin, "CapacitorVideoRecorderPlugin",
            CAP_PLUGIN_METHOD(show, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(hide, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(togglePip, CAPPluginReturnPromise);
-           CAP_PLUGIN_METHOD(startRecording, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(toggleCamera, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setQuality, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setPosition, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(stopRecording, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(startRecording, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getDuration, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getPath, CAPPluginReturnPromise);
 )
