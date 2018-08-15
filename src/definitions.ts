@@ -2,11 +2,11 @@ import { PluginListenerHandle } from '@capacitor/core';
 
 declare global {
 	interface PluginRegistry {
-		VideoRecorder?: VideoRecorder;
+		VideoRecorder?: VideoRecorderPlugin;
 	}
 }
 
-export interface VideoRecorder {
+export interface VideoRecorderPlugin {
 	initialize(options?: VideoRecorderOptions): Promise<void>;
 	destroy(): Promise<void>;
 	flipCamera(): Promise<void>;
