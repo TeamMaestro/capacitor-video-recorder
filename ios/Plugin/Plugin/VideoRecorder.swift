@@ -47,7 +47,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         self.audioRecorder?.updateMeters()
         // let peakDecebels: Float = (self.audioRecorder?.peakPower(forChannel: 1))!
         let averagePower: Float = (self.audioRecorder?.averagePower(forChannel: 1))!
-        // self.notifyListeners("onVolumeInput", data: ["value":averagePower])
+        self.notifyListeners("onVolumeInput", data: ["value":averagePower])
     }
 
 
