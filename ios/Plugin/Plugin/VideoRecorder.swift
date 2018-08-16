@@ -152,7 +152,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                     self.audioRecorder?.isMeteringEnabled = true
                     self.audioRecorder?.prepareToRecord()
                     self.audioRecorder?.record()
-                    self.audioLevelTimer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(self.levelTimerCallback(_:)), userInfo: nil, repeats: true)
+                    self.audioLevelTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.levelTimerCallback(_:)), userInfo: nil, repeats: true)
                     self.audioRecorder?.updateMeters()
 
                     // Start running sessions
