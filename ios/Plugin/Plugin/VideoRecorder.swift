@@ -406,10 +406,6 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 fileName.append(".mp4")
                 let fileUrl = NSURL.fileURL(withPath: joinPath(left:tempDir.path,right: fileName));
                 videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
-
-				DispatchQueue.main.async {
-            		self.durationTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(self.updateDuration), userInfo: nil, repeats: true)
-        		}
                 call.success()
             }
         }
@@ -425,15 +421,6 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 self.videoOutput!.stopRecording()
             }
         }
-    }
-
-	@objc func updateDuration() {
-		if (self.videoOutput!.isRecording == true) {
-			let duration = self.videoOutput?.recordedDuration;
-			if (duration != nil) {
-        		self.notifyListeners("onDurationChange", data: ["value":round(CMTimeGetSeconds(duration!))])
-			}
-		}
     }
 
 	/**
