@@ -408,7 +408,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
 
 				DispatchQueue.main.async {
-            		self.durationTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(self.updateDuration), userInfo: nil, repeats: true)
+            		self.durationTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(self.updateDuration), userInfo: nil, repeats: true)
         		}
                 call.success()
             }
