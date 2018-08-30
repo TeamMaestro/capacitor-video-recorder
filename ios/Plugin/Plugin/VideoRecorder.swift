@@ -138,6 +138,9 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         break;
                     }
                     
+                    let connection: AVCaptureConnection? = self.videoOutput?.connection(with: .video)
+                    self.videoOutput?.setOutputSettings([AVVideoCodecKey : AVVideoCodecH264], for: connection!)
+                    
                     // Commit configurations
                     self.captureSession?.commitConfiguration()
                     
