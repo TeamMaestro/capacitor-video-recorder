@@ -36,6 +36,13 @@ export interface VideoRecorderPreviewFrame {
 	}
 }
 
+export const ERROR = {
+    CAMERA_RESTRICTED: 'Camera access restricted',
+    CAMERA_DENIED: 'Camera access denied',
+    MICROPHONE_RESTRICTED: 'Microphone access restricted',
+    MICROPHONE_DENIED: 'Microphone access denied'
+}
+
 export interface VideoRecorderOptions {
 	camera?: VideoRecorderCamera;
 	quality?: VideoRecorderQuality;

@@ -66,118 +66,118 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
             }
             self.currentFrameConfig = self.previewFrameConfigs.first!
             
-            checkAuthorizationStatus(call)
-            
-            DispatchQueue.main.async {
-                do {
-                    // Set webview to transparent and set the app window background to white
-                    UIApplication.shared.delegate?.window?!.backgroundColor = UIColor.white
-                    self.capWebView?.isOpaque = false
-                    self.capWebView?.backgroundColor = UIColor.clear
-                
-                    let deviceDescoverySession = AVCaptureDevice.DiscoverySession.init(
-                        deviceTypes: [AVCaptureDevice.DeviceType.builtInWideAngleCamera],
-                        mediaType: AVMediaType.video,
-                        position: AVCaptureDevice.Position.unspecified)
-                
-                    for device in deviceDescoverySession.devices {
-                        if device.position == AVCaptureDevice.Position.back {
-                            self.backCamera = device
-                        } else if device.position == AVCaptureDevice.Position.front {
-                            self.frontCamera = device
+            if checkAuthorizationStatus(call) {
+                DispatchQueue.main.async {
+                    do {
+                        // Set webview to transparent and set the app window background to white
+                        UIApplication.shared.delegate?.window?!.backgroundColor = UIColor.white
+                        self.capWebView?.isOpaque = false
+                        self.capWebView?.backgroundColor = UIColor.clear
+                        
+                        let deviceDescoverySession = AVCaptureDevice.DiscoverySession.init(
+                            deviceTypes: [AVCaptureDevice.DeviceType.builtInWideAngleCamera],
+                            mediaType: AVMediaType.video,
+                            position: AVCaptureDevice.Position.unspecified)
+                        
+                        for device in deviceDescoverySession.devices {
+                            if device.position == AVCaptureDevice.Position.back {
+                                self.backCamera = device
+                            } else if device.position == AVCaptureDevice.Position.front {
+                                self.frontCamera = device
+                            }
                         }
+                        
+                        if (self.backCamera == nil) {
+                            self.currentCamera = 1
+                        }
+                        
+                        // Create capture session
+                        self.captureSession = AVCaptureSession()
+                        // Begin configuration
+                        self.captureSession?.beginConfiguration()
+                        
+                        /**
+                         * Video file recording capture session
+                         */
+                        self.captureSession?.usesApplicationAudioSession = true
+                        // Add Camera Input
+                        self.cameraInput = try createCaptureDeviceInput(currentCamera: self.currentCamera, frontCamera: self.frontCamera, backCamera: self.backCamera)
+                        self.captureSession!.addInput(self.cameraInput!)
+                        // Add Microphone Input
+                        let microphone = AVCaptureDevice.default(for: .audio)
+                        if let audioInput = try? AVCaptureDeviceInput(device: microphone!), (self.captureSession?.canAddInput(audioInput))! {
+                            self.captureSession!.addInput(audioInput)
+                        }
+                        // Add Video File Output
+                        self.videoOutput = AVCaptureMovieFileOutput()
+                        self.captureSession!.addOutput(self.videoOutput!)
+                        
+                        // Set Video quality
+                        switch(self.quality){
+                        case 1:
+                            self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd1280x720
+                            break;
+                        case 2:
+                            self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd1920x1080
+                            break;
+                        case 3:
+                            self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd4K3840x2160
+                            break;
+                        case 4:
+                            self.captureSession?.sessionPreset = AVCaptureSession.Preset.high
+                            break;
+                        case 5:
+                            self.captureSession?.sessionPreset = AVCaptureSession.Preset.low
+                            break;
+                        case 6:
+                            self.captureSession?.sessionPreset = AVCaptureSession.Preset.cif352x288
+                            break;
+                        default:
+                            self.captureSession?.sessionPreset = AVCaptureSession.Preset.vga640x480
+                            break;
+                        }
+                        
+                        let connection: AVCaptureConnection? = self.videoOutput?.connection(with: .video)
+                        self.videoOutput?.setOutputSettings([AVVideoCodecKey : AVVideoCodecH264], for: connection!)
+                        
+                        // Commit configurations
+                        self.captureSession?.commitConfiguration()
+                        
+                        try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryRecord)
+                        let settings = [
+                            AVSampleRateKey : 44100.0,
+                            AVFormatIDKey : kAudioFormatAppleLossless,
+                            AVNumberOfChannelsKey : 2,
+                            AVEncoderAudioQualityKey : AVAudioQuality.max.rawValue
+                            ] as [String : Any]
+                        self.audioRecorder = try AVAudioRecorder(url: URL(fileURLWithPath: "/dev/null"), settings: settings)
+                        self.audioRecorder?.isMeteringEnabled = true
+                        self.audioRecorder?.prepareToRecord()
+                        self.audioRecorder?.record()
+                        self.audioLevelTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.levelTimerCallback(_:)), userInfo: nil, repeats: true)
+                        self.audioRecorder?.updateMeters()
+                        
+                        // Start running sessions
+                        self.captureSession!.startRunning()
+                        
+                        // Initialize camera view
+                        self.initializeCameraView()
+                        
+                        if autoShow {
+                            self.cameraView.isHidden = false
+                        }
+                        
+                    } catch CaptureError.backCameraUnavailable {
+                        call.error("Back camera unavailable")
+                    } catch CaptureError.frontCameraUnavailable {
+                        call.error("Front camera unavailable")
+                    } catch CaptureError.couldNotCaptureInput( _){
+                        call.error("Camera unavailable")
+                    } catch {
+                        call.error("Unexpected error")
                     }
-
-                    if (self.backCamera == nil) {
-                        self.currentCamera = 1
-                    }
-                    
-                    // Create capture session
-                    self.captureSession = AVCaptureSession()
-                    // Begin configuration
-                    self.captureSession?.beginConfiguration()
-
-                    /**
-                     * Video file recording capture session
-                     */
-                    self.captureSession?.usesApplicationAudioSession = true
-                    // Add Camera Input
-                    self.cameraInput = try createCaptureDeviceInput(currentCamera: self.currentCamera, frontCamera: self.frontCamera, backCamera: self.backCamera)
-                    self.captureSession!.addInput(self.cameraInput!)
-                    // Add Microphone Input
-                    let microphone = AVCaptureDevice.default(for: .audio)
-                    if let audioInput = try? AVCaptureDeviceInput(device: microphone!), (self.captureSession?.canAddInput(audioInput))! {
-                        self.captureSession!.addInput(audioInput)
-                    }
-                    // Add Video File Output
-                    self.videoOutput = AVCaptureMovieFileOutput()
-                    self.captureSession!.addOutput(self.videoOutput!)
-                    
-                    // Set Video quality
-                    switch(self.quality){
-                    case 1:
-                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd1280x720
-                        break;
-                    case 2:
-                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd1920x1080
-                        break;
-                    case 3:
-                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.hd4K3840x2160
-                        break;
-                    case 4:
-                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.high
-                        break;
-                    case 5:
-                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.low
-                        break;
-                    case 6:
-                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.cif352x288
-                        break;
-                    default:
-                        self.captureSession?.sessionPreset = AVCaptureSession.Preset.vga640x480
-                        break;
-                    }
-                    
-                    let connection: AVCaptureConnection? = self.videoOutput?.connection(with: .video)
-                    self.videoOutput?.setOutputSettings([AVVideoCodecKey : AVVideoCodecH264], for: connection!)
-                    
-                    // Commit configurations
-                    self.captureSession?.commitConfiguration()
-                    
-                    try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryRecord)
-                    let settings = [
-                        AVSampleRateKey : 44100.0,
-                        AVFormatIDKey : kAudioFormatAppleLossless,
-                        AVNumberOfChannelsKey : 2,
-                        AVEncoderAudioQualityKey : AVAudioQuality.max.rawValue
-                    ] as [String : Any]
-                    self.audioRecorder = try AVAudioRecorder(url: URL(fileURLWithPath: "/dev/null"), settings: settings)
-                    self.audioRecorder?.isMeteringEnabled = true
-                    self.audioRecorder?.prepareToRecord()
-                    self.audioRecorder?.record()
-                    self.audioLevelTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.levelTimerCallback(_:)), userInfo: nil, repeats: true)
-                    self.audioRecorder?.updateMeters()
-
-                    // Start running sessions
-                    self.captureSession!.startRunning()
-                    
-                    // Initialize camera view
-                    self.initializeCameraView()
-                    
-                    if autoShow {
-                        self.cameraView.isHidden = false
-                    }
-                
-                } catch CaptureError.backCameraUnavailable {
-                    call.error("Back camera unavailable")
-                } catch CaptureError.frontCameraUnavailable {
-                    call.error("Front camera unavailable")
-                } catch CaptureError.couldNotCaptureInput( _){
-                    call.error("Camera unavailable")
-                } catch {
-                    call.error("Unexpected error")
+                    call.success()
                 }
-                call.success()
             }
         }
     }
