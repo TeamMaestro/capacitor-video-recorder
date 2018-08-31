@@ -408,8 +408,12 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 var fileName = randomFileName()
                 fileName.append(".mp4")
                 let fileUrl = NSURL.fileURL(withPath: joinPath(left:tempDir.path,right: fileName));
-                videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
-                call.success()
+                
+                DispatchQueue.main.async {
+                    self.videoOutput?.connection(with: .video)?.videoOrientation = self.cameraView.interfaceOrientationToVideoOrientation(UIApplication.shared.statusBarOrientation)
+                    self.videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
+                    call.success()
+                }
             }
         }
     }
