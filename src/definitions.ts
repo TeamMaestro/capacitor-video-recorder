@@ -36,7 +36,7 @@ export interface VideoRecorderPreviewFrame {
 	}
 }
 
-export const ERROR = {
+export const VideoRecorderErrors = {
     CAMERA_RESTRICTED: 'Camera access restricted',
     CAMERA_DENIED: 'Camera access denied',
     MICROPHONE_RESTRICTED: 'Microphone access restricted',
