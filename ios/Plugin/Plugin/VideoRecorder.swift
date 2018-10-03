@@ -143,7 +143,8 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         // Commit configurations
                         self.captureSession?.commitConfiguration()
                         
-                        try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryRecord)
+                        try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryRecord, with: AVAudioSessionCategoryOptions.mixWithOthers)
+                        try? AVAudioSession.sharedInstance().setActive(true)
                         let settings = [
                             AVSampleRateKey : 44100.0,
                             AVFormatIDKey : kAudioFormatAppleLossless,
