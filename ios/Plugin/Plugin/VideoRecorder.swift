@@ -110,6 +110,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         }
                         // Add Video File Output
                         self.videoOutput = AVCaptureMovieFileOutput()
+                        self.videoOutput?.movieFragmentInterval = kCMTimeInvalid
                         self.captureSession!.addOutput(self.videoOutput!)
                         
                         // Set Video quality
