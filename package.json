@@ -1,6 +1,6 @@
 {
-  "name": "capacitor-video-recorder",
-  "version": "0.3.0",
+  "name": "@teamhive/capacitor-video-recorder",
+  "version": "0.3.3",
   "description": "",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -22,7 +22,7 @@
     "dist/",
     "ios/",
     "android/",
-    "CapacitorVideoRecorder.podspec"
+    "TeamhiveCapacitorVideoRecorder.podspec"
   ],
   "keywords": [
     "capacitor",
