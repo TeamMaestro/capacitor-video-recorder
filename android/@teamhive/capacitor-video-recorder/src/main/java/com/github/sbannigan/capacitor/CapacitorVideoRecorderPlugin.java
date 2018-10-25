@@ -319,7 +319,8 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
             width = object.getInteger("width", -1);
             height = object.getInteger("height", -1);
             borderRadius = object.getInteger("borderRadius", 0);
-            dropShadow = new DropShadow(object.getJSObject("dropShadow"));
+            JSObject ds = object.getJSObject("dropShadow");
+            dropShadow = new DropShadow(ds != null ? ds : new JSObject());
         }
 
         class DropShadow {
