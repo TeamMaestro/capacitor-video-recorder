@@ -3,9 +3,14 @@ package com.github.sbannigan.capacitor;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.support.design.widget.CoordinatorLayout;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import com.getcapacitor.FileUtils;
 import com.getcapacitor.JSArray;
@@ -16,6 +21,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,14 +36,14 @@ import co.fitcom.fancycamera.VideoEvent;
 
 @NativePlugin(
         requestCodes = {
-                CapacitorVideoRecorderPlugin.REQUEST_CODE
+                VideoRecorder.REQUEST_CODE
         }
 )
-public class CapacitorVideoRecorderPlugin extends Plugin {
+public class VideoRecorder extends Plugin {
     static final int REQUEST_CODE = 868;
     private FancyCamera fancyCamera;
     private PluginCall call;
-    private HashMap<String,FrameConfig> previewFrameConfigs = new HashMap<>();
+    private HashMap<String, FrameConfig> previewFrameConfigs;
     private FrameConfig currentFrameConfig;
     private FancyCamera.CameraPosition cameraPosition = FancyCamera.CameraPosition.BACK;
 
@@ -48,9 +54,8 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
     @Override
     protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
             fancyCamera.start();
-            updateCameraView(currentFrameConfig);
         }
     }
 
@@ -60,12 +65,28 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
         JSObject defaultFrame = new JSObject();
         defaultFrame.put("id", "default");
         currentFrameConfig = new FrameConfig(defaultFrame);
+        previewFrameConfigs = new HashMap<>();
     }
 
     @PluginMethod()
-    public void initialize(PluginCall call) {
+    public void initialize(final PluginCall call) {
         fancyCamera = new FancyCamera(this.getContext());
         fancyCamera.setListener(new CameraEventListenerUI() {
+            @Override
+            public void onCameraOpenUI() {
+                if (getCall() != null) {
+                    getCall().success();
+                }
+                updateCameraView(currentFrameConfig);
+            }
+
+            @Override
+            public void onCameraCloseUI() {
+                if (getCall() != null) {
+                    getCall().success();
+                }
+            }
+
             @Override
             public void onPhotoEventUI(PhotoEvent event) {
 
@@ -87,15 +108,27 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
                         }
                     }
 
+                } else if (event.getType() == EventType.INFO &&
+                        event
+                                .getMessage().contains(VideoEvent.EventInfo.RECORDING_STARTED.toString())) {
+                    if (getCall() != null) {
+                        call.success();
+                    }
+
                 }
             }
         });
-        FrameLayout.LayoutParams cameraPreviewParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        ((ViewGroup) this.bridge.getWebView().getParent()).addView(fancyCamera, cameraPreviewParams);
 
-        this.bridge.getWebView().bringToFront();
-
-        fancyCamera.setCameraPosition(call.getInt("camera", 0));
+        final FrameLayout.LayoutParams cameraPreviewParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((CoordinatorLayout) bridge.getWebView().getParent()).addView(fancyCamera, cameraPreviewParams);
+                bridge.getWebView().bringToFront();
+                bridge.getWebView().getParent().requestLayout();
+                ((CoordinatorLayout) bridge.getWebView().getParent()).invalidate();
+            }
+        });
 
 
         JSObject defaultFrame = new JSObject();
@@ -104,29 +137,38 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
         defaultArray.put(defaultFrame);
         JSArray array = call.getArray("previewFrames", defaultArray);
         int size = array.length();
-        for (int i = 0; i > size; i++) {
+        for (int i = 0; i < size; i++) {
             try {
-                FrameConfig config = (FrameConfig) array.get(i);
-                previewFrameConfigs.put(config.id,config);
+                JSONObject obj = (JSONObject) array.get(i);
+                FrameConfig config = new FrameConfig(JSObject.fromJSONObject(obj));
+                previewFrameConfigs.put(config.id, config);
             } catch (JSONException ignored) {
 
             }
         }
 
 
-        if(fancyCamera.hasPermission()){
-            fancyCamera.start();
-            updateCameraView(currentFrameConfig);
-        }else{
+        if (fancyCamera.hasPermission()) {
+            if (!fancyCamera.cameraStarted()) {
+                fancyCamera.start();
+                fancyCamera.setCameraPosition(call.getInt("camera", 0));
+            }
+        } else {
             fancyCamera.requestPermission();
         }
 
-        call.success();
+        this.call = call;
     }
 
     @PluginMethod()
     public void destroy(PluginCall call) {
         makeOpaque();
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((ViewGroup) bridge.getWebView().getParent()).removeView(fancyCamera);
+            }
+        });
         fancyCamera.release();
         call.success();
     }
@@ -141,16 +183,20 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
         int quality = call.getInt("quality");
         fancyCamera.setCameraPosition(position);
         fancyCamera.setQuality(quality);
-        this.bridge.getWebView().setBackgroundColor(Color.argb(0, 0, 0, 0));
-        fancyCamera.start();
-        call.success();
+        bridge.getWebView().setBackgroundColor(Color.argb(0, 0, 0, 0));
+        if (!fancyCamera.cameraStarted()) {
+            fancyCamera.start();
+            this.call = call;
+        } else {
+            call.success();
+        }
     }
 
     @PluginMethod()
     public void hidePreviewFrame(PluginCall call) {
         makeOpaque();
         fancyCamera.stop();
-        call.success();
+        this.call = call;
     }
 
     @PluginMethod()
@@ -160,6 +206,7 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
 
     @PluginMethod()
     public void startRecording(PluginCall call) {
+        // this.call = call;
         fancyCamera.startRecording();
         call.success();
     }
@@ -194,7 +241,6 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
         int quality = call.getInt("quality");
         fancyCamera.setQuality(quality);
     }
-
 
     @PluginMethod()
     public void addPreviewFrameConfig(PluginCall call) {
@@ -249,6 +295,8 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
             }
             FrameConfig existingConfig = previewFrameConfigs.get(layerId);
             if (existingConfig != null) {
+                Log.d("existingConfig",existingConfig.id);
+                Log.d("currentFrameConfig",currentFrameConfig.id);
                 if (!existingConfig.id.equals(currentFrameConfig.id)) {
                     currentFrameConfig = existingConfig;
                     updateCameraView(currentFrameConfig);
@@ -266,14 +314,20 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
         return (int) (value * getContext().getResources().getDisplayMetrics().density + 0.5f);
     }
 
-    private void updateCameraView(FrameConfig frameConfig) {
+    private void updateCameraView(final FrameConfig frameConfig) {
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int deviceHeight = displayMetrics.heightPixels;
         int deviceWidth = displayMetrics.widthPixels;
         int width;
         int height;
+        if (fancyCamera.getLayoutParams() == null) {
+            fancyCamera.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
         ViewGroup.LayoutParams oldParams = fancyCamera.getLayoutParams();
+
         if (frameConfig.width == -1) {
             width = deviceWidth;
         } else {
@@ -291,13 +345,31 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
         fancyCamera.setY(frameConfig.y);
         fancyCamera.setX(frameConfig.x);
         fancyCamera.setElevation(9);
-
-
+        bridge.getWebView().setElevation(9);
+        bridge.getWebView().setBackgroundColor(Color.argb(0, 0, 0, 0));
         if (frameConfig.stackPosition.equals("front")) {
-            fancyCamera.bringToFront();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    fancyCamera.bringToFront();
+                    bridge.getWebView().getParent().requestLayout();
+                    ((CoordinatorLayout) bridge.getWebView().getParent()).invalidate();
+                }
+            });
+
         } else if (frameConfig.stackPosition.equals("back")) {
-            getBridge().getWebView().bringToFront();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (frameConfig.stackPosition.equals("back")) {
+                        getBridge().getWebView().bringToFront();
+                    }
+                    bridge.getWebView().getParent().requestLayout();
+                    ((CoordinatorLayout) bridge.getWebView().getParent()).invalidate();
+                }
+            });
         }
+
     }
 
 
@@ -319,7 +391,8 @@ public class CapacitorVideoRecorderPlugin extends Plugin {
             width = object.getInteger("width", -1);
             height = object.getInteger("height", -1);
             borderRadius = object.getInteger("borderRadius", 0);
-            dropShadow = new DropShadow(object.getJSObject("dropShadow"));
+            JSObject ds = object.getJSObject("dropShadow");
+            dropShadow = new DropShadow(ds != null ? ds : new JSObject());
         }
 
         class DropShadow {

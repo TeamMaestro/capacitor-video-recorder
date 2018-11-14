@@ -3,3 +3,4 @@ ios/Plugin/Pods/
 node_modules/
 .DS_Store
 demo/android/app/src/main/assets
+.idea
