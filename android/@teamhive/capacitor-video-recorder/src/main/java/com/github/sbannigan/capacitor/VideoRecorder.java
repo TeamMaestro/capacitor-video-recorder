@@ -54,7 +54,7 @@ public class VideoRecorder extends Plugin {
     @Override
     protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+        if (fancyCamera.hasPermission()) {
             fancyCamera.start();
         }
     }
