@@ -45,7 +45,7 @@ public class VideoRecorder extends Plugin {
     private PluginCall call;
     private HashMap<String, FrameConfig> previewFrameConfigs;
     private FrameConfig currentFrameConfig;
-    private FancyCamera.CameraPosition cameraPosition = FancyCamera.CameraPosition.BACK;
+    private FancyCamera.CameraPosition cameraPosition = FancyCamera.CameraPosition.FRONT;
 
     PluginCall getCall() {
         return call;
@@ -72,7 +72,6 @@ public class VideoRecorder extends Plugin {
     public void initialize(final PluginCall call) {
         fancyCamera = new FancyCamera(this.getContext());
         fancyCamera.setListener(new CameraEventListenerUI() {
-            @Override
             public void onCameraOpenUI() {
                 if (getCall() != null) {
                     getCall().success();
@@ -80,7 +79,6 @@ public class VideoRecorder extends Plugin {
                 updateCameraView(currentFrameConfig);
             }
 
-            @Override
             public void onCameraCloseUI() {
                 if (getCall() != null) {
                     getCall().success();
@@ -151,7 +149,17 @@ public class VideoRecorder extends Plugin {
         if (fancyCamera.hasPermission()) {
             if (!fancyCamera.cameraStarted()) {
                 fancyCamera.start();
-                fancyCamera.setCameraPosition(call.getInt("camera", 0));
+
+                // Swapping these around since it is the other way for iOS and the plugin interface needs to stay consistent
+                if (call.getInt("camera") == 1) {
+                    fancyCamera.setCameraPosition(0);
+                }
+                else if (call.getInt("camera") == 0) {
+                    fancyCamera.setCameraPosition(1);
+                }
+                else {
+                    fancyCamera.setCameraPosition(1);
+                }
             }
         } else {
             fancyCamera.requestPermission();
