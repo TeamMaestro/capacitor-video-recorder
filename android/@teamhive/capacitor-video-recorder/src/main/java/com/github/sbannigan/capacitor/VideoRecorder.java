@@ -145,21 +145,21 @@ public class VideoRecorder extends Plugin {
             }
         }
 
-
+        fancyCamera.setCameraPosition(1);
         if (fancyCamera.hasPermission()) {
+            // Swapping these around since it is the other way for iOS and the plugin interface needs to stay consistent
+            if (call.getInt("camera") == 1) {
+                fancyCamera.setCameraPosition(0);
+            }
+            else if (call.getInt("camera") == 0) {
+                fancyCamera.setCameraPosition(1);
+            }
+            else {
+                fancyCamera.setCameraPosition(1);
+            }
+
             if (!fancyCamera.cameraStarted()) {
                 fancyCamera.start();
-
-                // Swapping these around since it is the other way for iOS and the plugin interface needs to stay consistent
-                if (call.getInt("camera") == 1) {
-                    fancyCamera.setCameraPosition(0);
-                }
-                else if (call.getInt("camera") == 0) {
-                    fancyCamera.setCameraPosition(1);
-                }
-                else {
-                    fancyCamera.setCameraPosition(1);
-                }
             }
         } else {
             fancyCamera.requestPermission();
