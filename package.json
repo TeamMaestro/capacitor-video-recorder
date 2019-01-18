@@ -1,6 +1,6 @@
 {
   "name": "@teamhive/capacitor-video-recorder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
