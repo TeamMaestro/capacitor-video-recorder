@@ -4,37 +4,37 @@ import Capacitor
 
 @objc(CAPVideoRecorderPlugin)
 public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDelegate {
-    
+
     var capWebView: WKWebView!
-    
+
     var cameraView: CameraView!
     var captureSession: AVCaptureSession?
     var captureVideoPreviewLayer: AVCaptureVideoPreviewLayer?
     var videoOutput: AVCaptureMovieFileOutput?
     var durationTimer: Timer?
-    
+
     var audioLevelTimer: Timer?
     var audioRecorder: AVAudioRecorder?
-    
+
     var cameraInput: AVCaptureDeviceInput?
-    
+
     var currentCamera: Int = 0
     var frontCamera: AVCaptureDevice?
     var backCamera: AVCaptureDevice?
     var quality: Int = 0
-    
+
     var stopRecordingCall: CAPPluginCall?
-    
+
     var previewFrameConfigs: [FrameConfig] = []
     var currentFrameConfig: FrameConfig = FrameConfig(["id": "default"])
-    
+
     /**
      * Capacitor Plugin load
      */
     override public func load() {
         self.capWebView = self.bridge.bridgeDelegate.bridgedWebView
     }
-        
+
     /**
      * AVCaptureFileOutputRecordingDelegate
      */
@@ -42,7 +42,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         self.durationTimer?.invalidate()
         self.stopRecordingCall?.success(["videoUrl": CAPFileManager.getPortablePath(uri: outputFileURL)! as String])
     }
-    
+
     @objc func levelTimerCallback(_ timer: Timer?) {
         self.audioRecorder?.updateMeters()
         // let peakDecebels: Float = (self.audioRecorder?.peakPower(forChannel: 1))!
@@ -60,12 +60,12 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
             self.currentCamera = call.getInt("camera", 0)!
             self.quality = call.getInt("quality", 0)!
             let autoShow = call.getBool("autoShow", true)!
-            
+
             for frameConfig in call.getArray("previewFrames", [AnyHashable: Any].self, [ ["id": "default"] ])! {
                 self.previewFrameConfigs.append(FrameConfig(frameConfig))
             }
             self.currentFrameConfig = self.previewFrameConfigs.first!
-            
+
             if checkAuthorizationStatus(call) {
                 DispatchQueue.main.async {
                     do {
@@ -73,12 +73,12 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         UIApplication.shared.delegate?.window?!.backgroundColor = UIColor.white
                         self.capWebView?.isOpaque = false
                         self.capWebView?.backgroundColor = UIColor.clear
-                        
+
                         let deviceDescoverySession = AVCaptureDevice.DiscoverySession.init(
                             deviceTypes: [AVCaptureDevice.DeviceType.builtInWideAngleCamera],
                             mediaType: AVMediaType.video,
                             position: AVCaptureDevice.Position.unspecified)
-                        
+
                         for device in deviceDescoverySession.devices {
                             if device.position == AVCaptureDevice.Position.back {
                                 self.backCamera = device
@@ -86,16 +86,16 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                                 self.frontCamera = device
                             }
                         }
-                        
+
                         if (self.backCamera == nil) {
                             self.currentCamera = 1
                         }
-                        
+
                         // Create capture session
                         self.captureSession = AVCaptureSession()
                         // Begin configuration
                         self.captureSession?.beginConfiguration()
-                        
+
                         /**
                          * Video file recording capture session
                          */
@@ -112,7 +112,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         self.videoOutput = AVCaptureMovieFileOutput()
                         self.videoOutput?.movieFragmentInterval = kCMTimeInvalid
                         self.captureSession!.addOutput(self.videoOutput!)
-                        
+
                         // Set Video quality
                         switch(self.quality){
                         case 1:
@@ -137,13 +137,13 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                             self.captureSession?.sessionPreset = AVCaptureSession.Preset.vga640x480
                             break;
                         }
-                        
+
                         let connection: AVCaptureConnection? = self.videoOutput?.connection(with: .video)
-                        self.videoOutput?.setOutputSettings([AVVideoCodecKey : AVVideoCodecH264], for: connection!)
-                        
+                        self.videoOutput?.setOutputSettings([AVVideoCodecKey : AVVideoCodecType.h264], for: connection!)
+
                         // Commit configurations
                         self.captureSession?.commitConfiguration()
-                        
+
                         try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryRecord, with: AVAudioSessionCategoryOptions.mixWithOthers)
                         try? AVAudioSession.sharedInstance().setActive(true)
                         let settings = [
@@ -158,17 +158,17 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         self.audioRecorder?.record()
                         self.audioLevelTimer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.levelTimerCallback(_:)), userInfo: nil, repeats: true)
                         self.audioRecorder?.updateMeters()
-                        
+
                         // Start running sessions
                         self.captureSession!.startRunning()
-                        
+
                         // Initialize camera view
                         self.initializeCameraView()
-                        
+
                         if autoShow {
                             self.cameraView.isHidden = false
                         }
-                        
+
                     } catch CaptureError.backCameraUnavailable {
                         call.error("Back camera unavailable")
                     } catch CaptureError.frontCameraUnavailable {
@@ -191,7 +191,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         DispatchQueue.main.async {
             let appDelegate = UIApplication.shared.delegate
             appDelegate?.window?!.backgroundColor = UIColor.black
-            
+
             self.capWebView?.isOpaque = true
             self.capWebView?.backgroundColor = UIColor.white
             if (self.captureSession != nil) {
@@ -239,7 +239,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 self.currentCamera = self.currentCamera == 0 ? 1 : 0
                 call.error("Unexpected error")
             }
-            
+
             if (input != nil) {
                 let currentInput = self.cameraInput
                 self.captureSession?.beginConfiguration()
@@ -262,7 +262,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 return
             }
 			let newFrame = FrameConfig(call.options)
-            
+
             // Check to make sure config doesn't already exist, if it does, edit it instead
             if (self.previewFrameConfigs.index(where: {$0.id == layerId }) == nil) {
                 self.previewFrameConfigs.append(newFrame)
@@ -284,9 +284,9 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 call.error("Must provide layer id")
                 return
             }
-            
+
             let updatedConfig = FrameConfig(call.options)
-            
+
             // Get existing frame config
             let existingConfig = self.previewFrameConfigs.filter( {$0.id == layerId }).first
             if (existingConfig != nil) {
@@ -308,7 +308,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
             call.success()
         }
     }
-    
+
     /**
      * Switch frame configs.
      */
@@ -358,7 +358,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
             }
         }
     }
-    
+
     func initializeCameraView() {
         self.cameraView = CameraView(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
         self.cameraView.isHidden = true
@@ -366,23 +366,23 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         self.captureVideoPreviewLayer = AVCaptureVideoPreviewLayer(session: self.captureSession!)
         self.captureVideoPreviewLayer?.frame = self.cameraView.bounds
         self.cameraView.addPreviewLayer(self.captureVideoPreviewLayer)
-        
+
         self.cameraView.backgroundColor = UIColor.black
         self.cameraView.videoPreviewLayer?.masksToBounds = true
         self.cameraView.clipsToBounds = false
         self.cameraView.layer.backgroundColor = UIColor.clear.cgColor
-        
+
         self.capWebView!.superview!.insertSubview(self.cameraView, belowSubview: self.capWebView!)
-        
+
         self.updateCameraView(self.currentFrameConfig)
     }
-    
+
     func updateCameraView(_ config: FrameConfig) {
         // Set position and dimensions
         let width = config.width as? String == "fill" ? UIScreen.main.bounds.width : config.width as! CGFloat
         let height = config.height as? String == "fill" ? UIScreen.main.bounds.height : config.height as! CGFloat
         self.cameraView.frame = CGRect(x: config.x, y: config.y, width: width, height: height)
-        
+
         // Set stackPosition
         if config.stackPosition == "front" {
             self.capWebView!.superview!.bringSubview(toFront: self.cameraView)
@@ -390,7 +390,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         else if config.stackPosition == "back" {
             self.capWebView!.superview!.sendSubview(toBack: self.cameraView)
         }
-        
+
         // Set decorations
         self.cameraView.videoPreviewLayer?.cornerRadius = config.borderRadius
         self.cameraView.layer.shadowOffset = CGSize.zero
@@ -399,7 +399,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         self.cameraView.layer.shadowRadius = config.dropShadow.radius
         self.cameraView.layer.shadowPath = UIBezierPath(roundedRect: self.cameraView.bounds, cornerRadius: config.borderRadius).cgPath
     }
-    
+
 	/**
 	* Start recording.
 	*/
@@ -410,7 +410,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 var fileName = randomFileName()
                 fileName.append(".mp4")
                 let fileUrl = NSURL.fileURL(withPath: joinPath(left:tempDir.path,right: fileName));
-                
+
                 DispatchQueue.main.async {
                     self.videoOutput?.connection(with: .video)?.videoOrientation = self.cameraView.interfaceOrientationToVideoOrientation(UIApplication.shared.statusBarOrientation)
                     self.videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
