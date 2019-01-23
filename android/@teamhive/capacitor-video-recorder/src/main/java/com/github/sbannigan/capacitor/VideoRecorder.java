@@ -1,16 +1,12 @@
 package com.github.sbannigan.capacitor;
 
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.support.design.widget.CoordinatorLayout;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 import com.getcapacitor.FileUtils;
 import com.getcapacitor.JSArray;
@@ -23,10 +19,9 @@ import com.getcapacitor.PluginMethod;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import co.fitcom.fancycamera.CameraEventListenerUI;
 import co.fitcom.fancycamera.EventType;
@@ -46,6 +41,8 @@ public class VideoRecorder extends Plugin {
     private HashMap<String, FrameConfig> previewFrameConfigs;
     private FrameConfig currentFrameConfig;
     private FancyCamera.CameraPosition cameraPosition = FancyCamera.CameraPosition.FRONT;
+    private Timer audioFeedbackTimer;
+    private boolean timerStarted;
 
     PluginCall getCall() {
         return call;
@@ -55,7 +52,50 @@ public class VideoRecorder extends Plugin {
     protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
         if (fancyCamera.hasPermission()) {
-            fancyCamera.start();
+            start();
+        }
+    }
+
+    private void start() {
+        if (timerStarted) {
+            return;
+        }
+
+        if (audioFeedbackTimer == null) {
+            audioFeedbackTimer = new Timer();
+        }
+
+        audioFeedbackTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        JSObject object = new JSObject();
+                        double db = fancyCamera != null ? fancyCamera.getDB() : 0;
+                        object.put("value", db);
+                        notifyListeners("onVolumeInput", object);
+                    }
+                });
+            }
+        }, 0, 100);
+    }
+
+    @Override
+    protected void handleOnPause() {
+        if (audioFeedbackTimer != null) {
+            audioFeedbackTimer.cancel();
+            audioFeedbackTimer = null;
+            timerStarted = false;
+        }
+        super.handleOnPause();
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        if (audioFeedbackTimer != null && !timerStarted) {
+            start();
         }
     }
 
@@ -116,7 +156,6 @@ public class VideoRecorder extends Plugin {
                 }
             }
         });
-
         final FrameLayout.LayoutParams cameraPreviewParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -150,16 +189,14 @@ public class VideoRecorder extends Plugin {
             // Swapping these around since it is the other way for iOS and the plugin interface needs to stay consistent
             if (call.getInt("camera") == 1) {
                 fancyCamera.setCameraPosition(0);
-            }
-            else if (call.getInt("camera") == 0) {
+            } else if (call.getInt("camera") == 0) {
                 fancyCamera.setCameraPosition(1);
-            }
-            else {
+            } else {
                 fancyCamera.setCameraPosition(1);
             }
 
             if (!fancyCamera.cameraStarted()) {
-                fancyCamera.start();
+                start();
             }
         } else {
             fancyCamera.requestPermission();
@@ -193,7 +230,7 @@ public class VideoRecorder extends Plugin {
         fancyCamera.setQuality(quality);
         bridge.getWebView().setBackgroundColor(Color.argb(0, 0, 0, 0));
         if (!fancyCamera.cameraStarted()) {
-            fancyCamera.start();
+            start();
             this.call = call;
         } else {
             call.success();
@@ -303,8 +340,8 @@ public class VideoRecorder extends Plugin {
             }
             FrameConfig existingConfig = previewFrameConfigs.get(layerId);
             if (existingConfig != null) {
-                Log.d("existingConfig",existingConfig.id);
-                Log.d("currentFrameConfig",currentFrameConfig.id);
+                Log.d("existingConfig", existingConfig.id);
+                Log.d("currentFrameConfig", currentFrameConfig.id);
                 if (!existingConfig.id.equals(currentFrameConfig.id)) {
                     currentFrameConfig = existingConfig;
                     updateCameraView(currentFrameConfig);
