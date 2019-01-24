@@ -102,14 +102,15 @@ public class VideoRecorder extends Plugin {
     @Override
     public void load() {
         super.load();
-        JSObject defaultFrame = new JSObject();
-        defaultFrame.put("id", "default");
-        currentFrameConfig = new FrameConfig(defaultFrame);
-        previewFrameConfigs = new HashMap<>();
     }
 
     @PluginMethod()
     public void initialize(final PluginCall call) {
+        JSObject defaultFrame = new JSObject();
+        defaultFrame.put("id", "default");
+        currentFrameConfig = new FrameConfig(defaultFrame);
+        previewFrameConfigs = new HashMap<>();
+
         fancyCamera = new FancyCamera(this.getContext());
         fancyCamera.setListener(new CameraEventListenerUI() {
             public void onCameraOpenUI() {
@@ -168,7 +169,7 @@ public class VideoRecorder extends Plugin {
         });
 
 
-        JSObject defaultFrame = new JSObject();
+        defaultFrame = new JSObject();
         defaultFrame.put("id", "default");
         JSArray defaultArray = new JSArray();
         defaultArray.put(defaultFrame);
