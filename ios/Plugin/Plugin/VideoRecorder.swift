@@ -40,7 +40,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
      */
     public func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         self.durationTimer?.invalidate()
-        self.stopRecordingCall?.success(["videoUrl": CAPFileManager.getPortablePath(uri: outputFileURL)! as String])
+        self.stopRecordingCall?.success(["videoUrl": CAPFileManager.getPortablePath(host: self.bridge.getLocalUrl(), uri: outputFileURL)! as String])
     }
 
     @objc func levelTimerCallback(_ timer: Timer?) {

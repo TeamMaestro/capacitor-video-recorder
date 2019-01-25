@@ -138,7 +138,7 @@ public class VideoRecorder extends Plugin {
                                 .getMessage().contains(VideoEvent.EventInfo.RECORDING_FINISHED.toString())) {
                     if (getCall() != null) {
                         JSObject object = new JSObject();
-                        String path = FileUtils.getPortablePath(getContext(), Uri.fromFile(event.getFile()));
+                        String path = FileUtils.getPortablePath(getContext(), bridge.getLocalUrl(), Uri.fromFile(event.getFile()));
                         object.put("videoUrl", path);
                         getCall().resolve(object);
                     } else {
