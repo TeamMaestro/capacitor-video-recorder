@@ -110,7 +110,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         }
                         // Add Video File Output
                         self.videoOutput = AVCaptureMovieFileOutput()
-                        self.videoOutput?.movieFragmentInterval = kCMTimeInvalid
+                        self.videoOutput?.movieFragmentInterval = CMTime.invalid
                         self.captureSession!.addOutput(self.videoOutput!)
 
                         // Set Video quality
@@ -143,8 +143,10 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
 
                         // Commit configurations
                         self.captureSession?.commitConfiguration()
-
-                        try? AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryRecord, with: AVAudioSessionCategoryOptions.mixWithOthers)
+                        
+                        try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [
+                            AVAudioSession.CategoryOptions.mixWithOthers
+                        ])
                         try? AVAudioSession.sharedInstance().setActive(true)
                         let settings = [
                             AVSampleRateKey : 44100.0,
@@ -385,10 +387,10 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
 
         // Set stackPosition
         if config.stackPosition == "front" {
-            self.capWebView!.superview!.bringSubview(toFront: self.cameraView)
+            self.capWebView!.superview!.bringSubviewToFront(self.cameraView)
         }
         else if config.stackPosition == "back" {
-            self.capWebView!.superview!.sendSubview(toBack: self.cameraView)
+            self.capWebView!.superview!.sendSubviewToBack(self.cameraView)
         }
 
         // Set decorations
