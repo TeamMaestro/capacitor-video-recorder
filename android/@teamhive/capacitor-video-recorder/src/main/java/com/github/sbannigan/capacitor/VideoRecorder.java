@@ -2,10 +2,8 @@ package com.github.sbannigan.capacitor;
 
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.HandlerThread;
 import android.support.design.widget.CoordinatorLayout;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -73,17 +71,6 @@ public class VideoRecorder extends Plugin {
         fancyCamera.start();
     }
 
-    private void stopCamera() {
-        if (fancyCamera != null) {
-            if (fancyCamera.cameraRecording()) {
-                fancyCamera.stopRecording();
-            } else {
-                fancyCamera.stop();
-                fancyCamera.release();
-            }
-        }
-    }
-
     private void startTimer() {
         if (timerStarted) {
             return;
@@ -118,19 +105,6 @@ public class VideoRecorder extends Plugin {
             audioFeedbackTimer = null;
         }
         timerStarted = false;
-    }
-
-    @Override
-    protected void handleOnPause() {
-        //  stopTimer();
-        //  stopCamera();
-        super.handleOnPause();
-    }
-
-    @Override
-    protected void handleOnResume() {
-        super.handleOnResume();
-        //  startCamera();
     }
 
     @Override
