@@ -43,7 +43,7 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'ionic-team:capacitor-android:1+'
-    implementation ('co.fitcom:fancycamera:0.6.4'){
+    implementation ('co.fitcom:fancycamera:0.6.8'){
         exclude group: "com.android.support"
     }
     testImplementation 'junit:junit:4.12'
