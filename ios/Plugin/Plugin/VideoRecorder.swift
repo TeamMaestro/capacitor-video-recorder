@@ -95,6 +95,8 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         self.captureSession = AVCaptureSession()
                         // Begin configuration
                         self.captureSession?.beginConfiguration()
+                        
+                        self.captureSession?.automaticallyConfiguresApplicationAudioSession = false
 
                         /**
                          * Video file recording capture session
@@ -145,7 +147,10 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         self.captureSession?.commitConfiguration()
                         
                         try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [
-                            AVAudioSession.CategoryOptions.mixWithOthers
+                            AVAudioSession.CategoryOptions.mixWithOthers,
+                            AVAudioSession.CategoryOptions.defaultToSpeaker,
+                            AVAudioSession.CategoryOptions.allowBluetoothA2DP,
+                            AVAudioSession.CategoryOptions.allowAirPlay
                         ])
                         try? AVAudioSession.sharedInstance().setActive(true)
                         let settings = [
@@ -200,11 +205,15 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
 				// Need to destroy all preview layers
                 self.previewFrameConfigs = []
                 self.currentFrameConfig = FrameConfig(["id": "default"])
-                self.captureSession!.stopRunning()
-                self.audioRecorder!.stop()
-                self.cameraView.removePreviewLayer()
+                if (self.captureSession!.isRunning) {
+                    self.captureSession!.stopRunning()
+                }
+                if (self.audioRecorder != nil && self.audioRecorder!.isRecording) {
+                    self.audioRecorder!.stop()
+                }
+                self.cameraView?.removePreviewLayer()
                 self.captureVideoPreviewLayer = nil
-                self.cameraView.removeFromSuperview()
+                self.cameraView?.removeFromSuperview()
                 self.videoOutput = nil
                 self.cameraView = nil
                 self.captureSession = nil
