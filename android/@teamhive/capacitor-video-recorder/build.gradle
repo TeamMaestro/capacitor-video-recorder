@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 27
@@ -42,7 +42,7 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'ionic-team:capacitor-android:1+'
+    implementation project(':capacitor-android')
     implementation ('co.fitcom:fancycamera:0.6.8'){
         exclude group: "com.android.support"
     }
