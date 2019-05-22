@@ -34,15 +34,14 @@ repositories {
     google()
     jcenter()
     mavenCentral()
-    maven {
-        url  "https://dl.bintray.com/ionic-team/capacitor"
-    }
 }
 
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':capacitor-android')
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:design-v4:27.1.1'
     implementation ('co.fitcom:fancycamera:0.6.8'){
         exclude group: "com.android.support"
     }
