@@ -34,9 +34,6 @@ repositories {
     google()
     jcenter()
     mavenCentral()
-    maven {
-        url  "https://dl.bintray.com/ionic-team/capacitor"
-    }
 }
 
 
