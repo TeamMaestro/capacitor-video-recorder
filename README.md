@@ -75,4 +75,4 @@ VideoRecorder.destroy();
 
 |iOS|Android|
 |---|---|
-|<img src="https://i.gyazo.com/2d7a483eb0693dae23f9d6273962d31d.gif" />|<img src="https://i.gyazo.com/04aa739d4ecde8260dd635cb40d650d0.gif" />|
+|<img src="https://user-images.githubusercontent.com/13732623/70366156-52e83500-1863-11ea-96f0-c53bdd12ebea.gif" />|<img src="https://user-images.githubusercontent.com/13732623/70366162-61365100-1863-11ea-8376-fe76cf147a73.gif" />|
