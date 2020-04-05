@@ -2,8 +2,8 @@ package com.github.sbannigan.capacitor;
 
 import android.graphics.Color;
 import android.net.Uri;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v7.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
