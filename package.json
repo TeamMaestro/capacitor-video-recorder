@@ -13,12 +13,12 @@
   "author": "Sean Bannigan",
   "license": "MIT",
   "dependencies": {
-    "@capacitor/core": "latest"
+    "@capacitor/core": "^2.0.0"
   },
   "devDependencies": {
     "typescript": "^2.6.2",
-    "@capacitor/ios": "latest",
-    "@capacitor/android": "latest"
+    "@capacitor/ios": "^2.0.0",
+    "@capacitor/android": "^2.0.0"
   },
   "files": [
     "dist/",
