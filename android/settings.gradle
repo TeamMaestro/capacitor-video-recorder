@@ -1,2 +1,6 @@
+rootProject.name = 'teamhive'
+include 'capacitor-video-recorder'
+project(':capacitor-video-recorder').projectDir = file('@teamhive/capacitor-video-recorder')
+
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
