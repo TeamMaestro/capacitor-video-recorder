@@ -1,7 +1,7 @@
 
   Pod::Spec.new do |s|
     s.name = 'TeamhiveCapacitorVideoRecorder'
-    s.version = '3.1.0'
+    s.version = '4.0.0'
     s.summary = 'Records video'
     s.license = 'MIT'
     s.homepage = 'https://github.com/TeamHive/capacitor-video-recorder.git'
