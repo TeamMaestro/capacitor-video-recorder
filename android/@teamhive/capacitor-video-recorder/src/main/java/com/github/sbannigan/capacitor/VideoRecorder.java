@@ -2,8 +2,6 @@ package com.github.sbannigan.capacitor;
 
 import android.graphics.Color;
 import android.net.Uri;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -23,6 +21,7 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import co.fitcom.fancycamera.CameraEventListenerUI;
 import co.fitcom.fancycamera.EventType;
 import co.fitcom.fancycamera.FancyCamera;
