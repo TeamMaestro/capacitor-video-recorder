@@ -240,7 +240,7 @@ public class VideoRecorder extends Plugin {
         fancyCamera.setCameraPosition(position);
         fancyCamera.setQuality(quality);
         bridge.getWebView().setBackgroundColor(Color.argb(0, 0, 0, 0));
-        if (!fancyCamera.cameraStarted()) {
+        if (fancyCamera != null && !fancyCamera.cameraStarted()) {
             startCamera();
             this.call = call;
         } else {
@@ -300,7 +300,7 @@ public class VideoRecorder extends Plugin {
 
     @PluginMethod()
     public void addPreviewFrameConfig(PluginCall call) {
-        if (fancyCamera.cameraStarted()) {
+        if (fancyCamera != null && fancyCamera.cameraStarted()) {
             String layerId = call.getString("id");
             if (layerId.isEmpty()) {
                 call.error("Must provide layer id");
@@ -321,7 +321,7 @@ public class VideoRecorder extends Plugin {
 
     @PluginMethod()
     public void editPreviewFrameConfig(PluginCall call) {
-        if (fancyCamera.cameraStarted()) {
+        if (fancyCamera != null && fancyCamera.cameraStarted()) {
             String layerId = call.getString("id");
             if (layerId.isEmpty()) {
                 call.error("Must provide layer id");
@@ -343,7 +343,7 @@ public class VideoRecorder extends Plugin {
 
     @PluginMethod()
     public void switchToPreviewFrame(PluginCall call) {
-        if (fancyCamera.cameraStarted()) {
+        if (fancyCamera != null && fancyCamera.cameraStarted()) {
             String layerId = call.getString("id");
             if (layerId.isEmpty()) {
                 call.error("Must provide layer id");
