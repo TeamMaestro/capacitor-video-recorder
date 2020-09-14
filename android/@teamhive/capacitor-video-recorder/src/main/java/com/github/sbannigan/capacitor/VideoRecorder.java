@@ -127,6 +127,9 @@ public class VideoRecorder extends Plugin {
                 }
                 startTimer();
                 updateCameraView(currentFrameConfig);
+                for (FrameConfig f : previewFrameConfigs.values()) {
+                    updateCameraView(f);
+                }
             }
 
             public void onCameraCloseUI() {
