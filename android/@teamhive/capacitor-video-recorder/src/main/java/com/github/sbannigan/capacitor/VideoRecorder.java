@@ -127,6 +127,9 @@ public class VideoRecorder extends Plugin {
                 }
                 startTimer();
                 updateCameraView(currentFrameConfig);
+                for (FrameConfig f : previewFrameConfigs.values()) {
+                    updateCameraView(f);
+                }
             }
 
             public void onCameraCloseUI() {
@@ -396,8 +399,8 @@ public class VideoRecorder extends Plugin {
 
         oldParams.width = width;
         oldParams.height = height;
-        fancyCamera.setY(frameConfig.y);
-        fancyCamera.setX(frameConfig.x);
+        fancyCamera.setY(getPixels((int) frameConfig.y));
+        fancyCamera.setX(getPixels((int) frameConfig.x));
         fancyCamera.setElevation(9);
         bridge.getWebView().setElevation(9);
         bridge.getWebView().setBackgroundColor(Color.argb(0, 0, 0, 0));
