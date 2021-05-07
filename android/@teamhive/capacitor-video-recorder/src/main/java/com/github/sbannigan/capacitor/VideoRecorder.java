@@ -120,6 +120,7 @@ public class VideoRecorder extends Plugin {
         previewFrameConfigs = new HashMap<>();
 
         fancyCamera = new FancyCamera(this.getContext());
+        fancyCamera.setDisableHEVC(true);
         fancyCamera.setListener(new CameraEventListenerUI() {
             public void onCameraOpenUI() {
                 if (getCall() != null) {

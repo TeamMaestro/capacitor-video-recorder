@@ -48,7 +48,7 @@ dependencies {
     implementation project(':capacitor-android')
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:design:28.0.0'
-    implementation ('co.fitcom:fancycamera:0.6.8'){
+    implementation ('co.fitcom:fancycamera:1.2.2'){
         exclude group: "com.android.support"
     }
     testImplementation "junit:junit:$junitVersion"
