@@ -1,4 +1,4 @@
-import { WebPlugin, registerWebPlugin } from '@capacitor/core';
+import { WebPlugin } from '@capacitor/core';
 import { VideoRecorderPlugin, VideoRecorderOptions, VideoRecorderPreviewFrame } from './definitions';
 
 class DropShadow {
@@ -9,9 +9,9 @@ class DropShadow {
 	constructor(options: DropShadow = <DropShadow>{}) {
 		this.opacity = options.opacity || 0;
 		this.radius = options.radius || 0;
-		this.color = hexToRgb(options.color || '#000000');
+		this.color = hexToRgb(options.color || '#000000') || '#000000';
 
-		function hexToRgb(hex: string): string {
+		function hexToRgb(hex: string) {
 			let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
 			hex = hex.replace(shorthandRegex, function(_m, r, g, b) {
 				return r + r + g + g + b + b;
@@ -189,9 +189,3 @@ export class VideoRecorderWeb extends WebPlugin implements VideoRecorderPlugin {
 		console.warn('VideoRecorder: No web mock available for addListener');
 	}
 }
-
-const VideoRecorder = new VideoRecorderWeb();
-
-export { VideoRecorder };
-
-registerWebPlugin(VideoRecorder);

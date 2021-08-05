@@ -96,18 +96,18 @@ class CameraView: UIView {
 public func checkAuthorizationStatus(_ call: CAPPluginCall) -> Bool {
     let videoStatus = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
     if (videoStatus == AVAuthorizationStatus.restricted) {
-        call.error("Camera access restricted")
+        call.reject("Camera access restricted")
         return false
     } else if videoStatus == AVAuthorizationStatus.denied {
-        call.error("Camera access denied")
+        call.reject("Camera access denied")
         return false
     }
     let audioStatus = AVCaptureDevice.authorizationStatus(for: AVMediaType.audio)
     if (audioStatus == AVAuthorizationStatus.restricted) {
-        call.error("Microphone access restricted")
+        call.reject("Microphone access restricted")
         return false
     } else if audioStatus == AVAuthorizationStatus.denied {
-        call.error("Microphone access denied")
+        call.reject("Microphone access denied")
         return false
     }
     return true

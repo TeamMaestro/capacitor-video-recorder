@@ -32,7 +32,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
      * Capacitor Plugin load
      */
     override public func load() {
-        self.capWebView = self.bridge.bridgeDelegate.bridgedWebView
+        self.capWebView = self.bridge?.webView
     }
 
     /**
@@ -40,7 +40,9 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
      */
     public func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         self.durationTimer?.invalidate()
-        self.stopRecordingCall?.success(["videoUrl": CAPFileManager.getPortablePath(host: self.bridge.getLocalUrl(), uri: outputFileURL)! as String])
+        self.stopRecordingCall?.resolve([
+            "videoUrl": self.bridge?.portablePath(fromLocalURL: outputFileURL)?.absoluteString as Any
+        ])
     }
 
     @objc func levelTimerCallback(_ timer: Timer?) {
@@ -57,12 +59,12 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
 	*/
     @objc func initialize(_ call: CAPPluginCall) {
         if (self.captureSession?.isRunning != true) {
-            self.currentCamera = call.getInt("camera", 0)!
-            self.quality = call.getInt("quality", 0)!
-            let autoShow = call.getBool("autoShow", true)!
+            self.currentCamera = call.getInt("camera", 0)
+            self.quality = call.getInt("quality", 0)
+            let autoShow = call.getBool("autoShow", true)
 
-            for frameConfig in call.getArray("previewFrames", [AnyHashable: Any].self, [ ["id": "default"] ])! {
-                self.previewFrameConfigs.append(FrameConfig(frameConfig))
+            for frameConfig in call.getArray("previewFrames", [ ["id": "default"] ]) {
+                self.previewFrameConfigs.append(FrameConfig(frameConfig as! [AnyHashable : Any]))
             }
             self.currentFrameConfig = self.previewFrameConfigs.first!
 
@@ -177,15 +179,15 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                         }
 
                     } catch CaptureError.backCameraUnavailable {
-                        call.error("Back camera unavailable")
+                        call.reject("Back camera unavailable")
                     } catch CaptureError.frontCameraUnavailable {
-                        call.error("Front camera unavailable")
+                        call.reject("Front camera unavailable")
                     } catch CaptureError.couldNotCaptureInput( _){
-                        call.error("Camera unavailable")
+                        call.reject("Camera unavailable")
                     } catch {
-                        call.error("Unexpected error")
+                        call.reject("Unexpected error")
                     }
-                    call.success()
+                    call.resolve()
                 }
             }
         }
@@ -224,7 +226,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 self.backCamera = nil
                 self.notifyListeners("onVolumeInput", data: ["value":0])
             }
-            call.success()
+            call.resolve()
         }
     }
 
@@ -239,16 +241,16 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 input = try createCaptureDeviceInput(currentCamera: self.currentCamera, frontCamera: self.frontCamera, backCamera: self.backCamera)
             } catch CaptureError.backCameraUnavailable {
                 self.currentCamera = self.currentCamera == 0 ? 1 : 0
-                call.error("Back camera unavailable")
+                call.reject("Back camera unavailable")
             } catch CaptureError.frontCameraUnavailable {
                 self.currentCamera = self.currentCamera == 0 ? 1 : 0
-                call.error("Front camera unavailable")
+                call.reject("Front camera unavailable")
             } catch CaptureError.couldNotCaptureInput( _) {
                 self.currentCamera = self.currentCamera == 0 ? 1 : 0
-                call.error("Camera unavailable")
+                call.reject("Camera unavailable")
             } catch {
                 self.currentCamera = self.currentCamera == 0 ? 1 : 0
-                call.error("Unexpected error")
+                call.reject("Unexpected error")
             }
 
             if (input != nil) {
@@ -258,7 +260,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 self.captureSession!.addInput(input!)
                 self.cameraInput = input
                 self.captureSession?.commitConfiguration()
-                call.success();
+                call.resolve();
             }
         }
     }
@@ -269,20 +271,20 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
     @objc func addPreviewFrameConfig(_ call: CAPPluginCall) {
         if (self.captureSession != nil) {
             guard let layerId = call.getString("id") else {
-                call.error("Must provide layer id")
+                call.reject("Must provide layer id")
                 return
             }
 			let newFrame = FrameConfig(call.options)
 
             // Check to make sure config doesn't already exist, if it does, edit it instead
-            if (self.previewFrameConfigs.index(where: {$0.id == layerId }) == nil) {
+            if (self.previewFrameConfigs.firstIndex(where: {$0.id == layerId }) == nil) {
                 self.previewFrameConfigs.append(newFrame)
             }
             else {
                 self.editPreviewFrameConfig(call)
                 return
             }
-			call.success()
+			call.resolve()
         }
     }
 
@@ -292,7 +294,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
     @objc func editPreviewFrameConfig(_ call: CAPPluginCall) {
         if (self.captureSession != nil) {
             guard let layerId = call.getString("id") else {
-                call.error("Must provide layer id")
+                call.reject("Must provide layer id")
                 return
             }
 
@@ -301,7 +303,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
             // Get existing frame config
             let existingConfig = self.previewFrameConfigs.filter( {$0.id == layerId }).first
             if (existingConfig != nil) {
-                let index = self.previewFrameConfigs.index(where: {$0.id == layerId })
+                let index = self.previewFrameConfigs.firstIndex(where: {$0.id == layerId })
                 self.previewFrameConfigs[index!] = updatedConfig
             }
             else {
@@ -316,7 +318,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                     self.updateCameraView(self.currentFrameConfig)
                 }
             }
-            call.success()
+            call.resolve()
         }
     }
 
@@ -326,7 +328,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
     @objc func switchToPreviewFrame(_ call: CAPPluginCall) {
         if (self.captureSession != nil) {
             guard let layerId = call.getString("id") else {
-                call.error("Must provide layer id")
+                call.reject("Must provide layer id")
                 return
             }
             DispatchQueue.main.async {
@@ -338,10 +340,10 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                     }
                 }
                 else {
-                    call.error("Frame config does not exist")
+                    call.reject("Frame config does not exist")
                     return
                 }
-                call.success()
+                call.resolve()
             }
         }
     }
@@ -353,7 +355,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         if (self.captureSession != nil) {
             DispatchQueue.main.async {
                 self.cameraView.isHidden = true
-                call.success()
+                call.resolve()
             }
         }
     }
@@ -365,7 +367,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         if (self.captureSession != nil) {
             DispatchQueue.main.async {
                 self.cameraView.isHidden = false
-                call.success()
+                call.resolve()
             }
         }
     }
@@ -425,7 +427,7 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
                 DispatchQueue.main.async {
                     self.videoOutput?.connection(with: .video)?.videoOrientation = self.cameraView.interfaceOrientationToVideoOrientation(UIApplication.shared.statusBarOrientation)
                     self.videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
-                    call.success()
+                    call.resolve()
                 }
             }
         }
@@ -450,12 +452,12 @@ public class CAPVideoRecorderPlugin: CAPPlugin, AVCaptureFileOutputRecordingDele
         if (self.videoOutput!.isRecording == true) {
             let duration = self.videoOutput?.recordedDuration;
             if (duration != nil) {
-                call.success(["value":round(CMTimeGetSeconds(duration!))])
+                call.resolve(["value":round(CMTimeGetSeconds(duration!))])
             } else {
-                call.success(["value":0])
+                call.resolve(["value":0])
             }
         } else {
-            call.success(["value":0])
+            call.resolve(["value":0])
         }
     }
 }
