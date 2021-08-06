@@ -154,6 +154,7 @@ export class VideoRecorderWeb extends WebPlugin implements VideoRecorderPlugin {
 			}
 			let config = this.previewFrameConfigs.filter(config => config.id === options.id);
 			if (config.length > 0) {
+				this.currentFrameConfig = config[0];
 				this._updateCameraView(config[0]);
 			}
 			else {
